@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: food-diet-app
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/food_diet?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ""
+      database: 0
+
+server:
+  port: 8080
+
+ai:
+  qwen:
+    api-key: ${AI_API_KEY:your-api-key-here}
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: qwen-turbo
+
+  kimi:
+    api-key: ${KIMI_API_KEY:your-api-key-here}
+    base-url: https://api.moonshot.cn/v1
+    model: moonshot-v1-8k
+
+logging:
+  level:
+    com.food.diet: INFO
+    org.springframework.web: INFO

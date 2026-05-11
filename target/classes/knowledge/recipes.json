@@ -1,0 +1,82 @@
+[
+  {
+    "name": "鸡胸肉沙拉",
+    "calories": 350,
+    "tags": ["减脂", "高蛋白", "晚餐"],
+    "ingredients": ["鸡胸肉100g", "生菜50g", "西红柿50g", "黄瓜50g", "橄榄油5g"],
+    "suitable_for": "午餐/晚餐",
+    "description": "清爽健康的减脂沙拉，高蛋白低脂肪"
+  },
+  {
+    "name": "番茄鸡蛋面",
+    "calories": 450,
+    "tags": ["家常", "简单", "午餐"],
+    "ingredients": ["面条100g", "番茄100g", "鸡蛋1个", "青菜50g"],
+    "suitable_for": "午餐",
+    "description": "简单易做的营养面食"
+  },
+  {
+    "name": "清蒸鱼",
+    "calories": 280,
+    "tags": ["高蛋白", "清淡", "晚餐"],
+    "ingredients": ["鲈鱼200g", "姜丝5g", "葱段10g", "酱油10ml"],
+    "suitable_for": "晚餐",
+    "description": "清淡鲜美的蒸鱼，保留鱼肉营养"
+  },
+  {
+    "name": "糙米饭团",
+    "calories": 320,
+    "tags": ["主食", "健康", "早餐"],
+    "ingredients": ["糙米100g", "紫菜1张", "鸡蛋1个", "黄瓜30g"],
+    "suitable_for": "早餐",
+    "description": "健康的糙米饭团，适合早餐"
+  },
+  {
+    "name": "酸奶水果杯",
+    "calories": 180,
+    "tags": ["加餐", "水果", "甜品"],
+    "ingredients": ["酸奶100g", "草莓50g", "蓝莓30g", "蜂蜜5g"],
+    "suitable_for": "加餐",
+    "description": "清爽甜美的水果酸奶杯"
+  },
+  {
+    "name": "牛肉西兰花",
+    "calories": 380,
+    "tags": ["高蛋白", "减脂", "晚餐"],
+    "ingredients": ["牛肉150g", "西兰花100g", "蒜末5g", "橄榄油5g"],
+    "suitable_for": "午餐/晚餐",
+    "description": "高蛋白低碳水的减脂餐"
+  },
+  {
+    "name": "红豆薏米粥",
+    "calories": 200,
+    "tags": ["祛湿", "主食", "早餐"],
+    "ingredients": ["红豆30g", "薏米30g", "水500ml"],
+    "suitable_for": "早餐",
+    "description": "祛湿养生的传统粥品"
+  },
+  {
+    "name": "凉拌黄瓜",
+    "calories": 50,
+    "tags": ["凉菜", "清淡", "蔬菜"],
+    "ingredients": ["黄瓜200g", "蒜末5g", "醋10ml", "香油3g"],
+    "suitable_for": "午餐/晚餐",
+    "description": "清爽解腻的凉拌菜"
+  },
+  {
+    "name": "豆腐青菜汤",
+    "calories": 120,
+    "tags": ["素食", "清淡", "汤类"],
+    "ingredients": ["豆腐100g", "青菜100g", "姜片3g", "盐2g"],
+    "suitable_for": "午餐/晚餐",
+    "description": "清淡营养的素汤"
+  },
+  {
+    "name": "香蕉坚果棒",
+    "calories": 250,
+    "tags": ["加餐", "能量", "简单"],
+    "ingredients": ["香蕉1根", "花生酱20g", "燕麦20g"],
+    "suitable_for": "加餐",
+    "description": "快速补充能量的健康零食"
+  }
+]
