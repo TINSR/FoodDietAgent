@@ -9,6 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -44,5 +45,12 @@ public class SummaryController {
         AgentResponse agentResponse = foodAgentService.analyzeAndRecommend(summary);
         summary.setAgentAdvice(agentResponse.getAdvice());
         return ApiResponse.success(summary);
+    }
+
+    @GetMapping("/summary/{userId}/weekly")
+    public ApiResponse<List<DailySummaryResponse>> getWeeklySummaries(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "7") int days) {
+        return ApiResponse.success(summaryService.getWeeklySummaries(userId, days));
     }
 }

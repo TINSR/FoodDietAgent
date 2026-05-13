@@ -15,4 +15,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
 
     @Query("SELECT f FROM Food f WHERE f.name LIKE CONCAT('%', :keyword, '%')")
     List<Food> searchByName(@Param("keyword") String keyword);
+
+    List<Food> findAll();
 }

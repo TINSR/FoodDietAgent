@@ -3,6 +3,7 @@ package com.food.diet.service;
 import com.food.diet.dto.response.DailySummaryResponse;
 import com.food.diet.entity.DailySummary;
 import com.food.diet.entity.FoodLog;
+import com.food.diet.entity.MacroTarget;
 import com.food.diet.entity.User;
 import com.food.diet.repository.DailySummaryRepository;
 import com.food.diet.repository.FoodLogRepository;
@@ -20,13 +21,16 @@ public class SummaryService {
     private final FoodLogRepository foodLogRepository;
     private final DailySummaryRepository dailySummaryRepository;
     private final UserRepository userRepository;
+    private final MacroTargetService macroTargetService;
 
     public SummaryService(FoodLogRepository foodLogRepository,
                           DailySummaryRepository dailySummaryRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          MacroTargetService macroTargetService) {
         this.foodLogRepository = foodLogRepository;
         this.dailySummaryRepository = dailySummaryRepository;
         this.userRepository = userRepository;
+        this.macroTargetService = macroTargetService;
     }
 
     public DailySummaryResponse getDailySummary(Long userId, LocalDate date) {
@@ -91,6 +95,18 @@ public class SummaryService {
                     .build());
         }
 
+        MacroTarget macroTarget = macroTargetService.getOrCreate(userId);
+        Integer proteinTarget = macroTarget != null ? macroTarget.getProteinGrams() : 150;
+        Integer carbsTarget = macroTarget != null ? macroTarget.getCarbsGrams() : 200;
+        Integer fatTarget = macroTarget != null ? macroTarget.getFatGrams() : 65;
+
+        double proteinProgress = proteinTarget > 0 ? Math.min(100, totalProtein.doubleValue() / proteinTarget * 100) : 0;
+        double carbsProgress = carbsTarget > 0 ? Math.min(100, totalCarb.doubleValue() / carbsTarget * 100) : 0;
+        double fatProgress = fatTarget > 0 ? Math.min(100, totalFat.doubleValue() / fatTarget * 100) : 0;
+
+        // Compute highlights
+        List<String> highlights = computeHighlights(totalCalories, target, proteinProgress, carbsProgress, fatProgress, logs);
+
         return DailySummaryResponse.builder()
                 .userId(userId)
                 .date(date.toString())
@@ -102,7 +118,14 @@ public class SummaryService {
                 .totalCarb(totalCarb.setScale(1, RoundingMode.HALF_UP))
                 .totalProtein(totalProtein.setScale(1, RoundingMode.HALF_UP))
                 .totalFat(totalFat.setScale(1, RoundingMode.HALF_UP))
+                .proteinTarget(proteinTarget)
+                .carbsTarget(carbsTarget)
+                .fatTarget(fatTarget)
+                .proteinProgress(proteinProgress)
+                .carbsProgress(carbsProgress)
+                .fatProgress(fatProgress)
                 .meals(meals)
+                .highlights(highlights)
                 .build();
     }
 
@@ -121,5 +144,58 @@ public class SummaryService {
         entity.setTotalFat(summary.getTotalFat());
 
         dailySummaryRepository.save(entity);
+    }
+
+    public List<DailySummaryResponse> getWeeklySummaries(Long userId, int days) {
+        List<DailySummaryResponse> result = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (int i = days - 1; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            result.add(getDailySummary(userId, date));
+        }
+        return result;
+    }
+
+    private List<String> computeHighlights(int calories, int target,
+                                          double proteinP, double carbsP, double fatP,
+                                          List<FoodLog> logs) {
+        List<String> hl = new ArrayList<>();
+        int over = calories - target;
+
+        if (over > 200) {
+            hl.add("🔥 热量超标" + over + "kcal");
+        } else if (calories < target * 0.4 && !logs.isEmpty()) {
+            hl.add("⚠️ 摄入不足");
+        }
+
+        if (proteinP < 50) {
+            hl.add("🥩 蛋白质不足");
+        } else if (proteinP > 110) {
+            hl.add("✅ 蛋白质充足");
+        }
+
+        if (carbsP > 110) {
+            hl.add("🍚 碳水偏高");
+        }
+
+        if (fatP > 110) {
+            hl.add("🥑 脂肪超标");
+        } else if (fatP < 40) {
+            hl.add("⚠️ 脂肪偏低");
+        }
+
+        // Check vegetable diversity
+        long vegeCount = logs.stream()
+            .filter(l -> l.getFoodName() != null && (
+                l.getFoodName().contains("青菜") || l.getFoodName().contains("菠菜") ||
+                l.getFoodName().contains("白菜") || l.getFoodName().contains("黄瓜") ||
+                l.getFoodName().contains("西兰花") || l.getFoodName().contains("西红柿") ||
+                l.getFoodName().contains("茄子") || l.getFoodName().contains("豆角")))
+            .count();
+        if (vegeCount == 0) {
+            hl.add("🥬 缺少蔬菜");
+        }
+
+        return hl;
     }
 }

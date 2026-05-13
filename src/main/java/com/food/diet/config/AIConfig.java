@@ -24,6 +24,8 @@ public class AIConfig {
                 .apiKey(qwenApiKey)
                 .baseUrl(qwenBaseUrl)
                 .modelName(qwenModel)
+                .maxTokens(300)
+                .temperature(0.3)
                 .build();
     }
 }

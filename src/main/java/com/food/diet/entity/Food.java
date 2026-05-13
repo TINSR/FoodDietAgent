@@ -26,6 +26,12 @@ public class Food {
     @Column(name = "fat_per_100g", precision = 5, scale = 2)
     private BigDecimal fatPer100g;
 
+    @Column(name = "fiber_per_100g", precision = 5, scale = 2)
+    private BigDecimal fiberPer100g;
+
+    @Column(name = "sodium_per_100g", precision = 6, scale = 2)
+    private BigDecimal sodiumPer100g;
+
     private String unit;
 
     public Long getId() { return id; }
@@ -42,6 +48,10 @@ public class Food {
     public void setProteinPer100g(BigDecimal proteinPer100g) { this.proteinPer100g = proteinPer100g; }
     public BigDecimal getFatPer100g() { return fatPer100g; }
     public void setFatPer100g(BigDecimal fatPer100g) { this.fatPer100g = fatPer100g; }
+    public BigDecimal getFiberPer100g() { return fiberPer100g; }
+    public void setFiberPer100g(BigDecimal fiberPer100g) { this.fiberPer100g = fiberPer100g; }
+    public BigDecimal getSodiumPer100g() { return sodiumPer100g; }
+    public void setSodiumPer100g(BigDecimal sodiumPer100g) { this.sodiumPer100g = sodiumPer100g; }
     public String getUnit() { return unit; }
     public void setUnit(String unit) { this.unit = unit; }
 }

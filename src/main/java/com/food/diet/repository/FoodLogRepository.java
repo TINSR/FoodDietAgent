@@ -20,4 +20,7 @@ public interface FoodLogRepository extends JpaRepository<FoodLog, Long> {
     List<FoodLog> findByUserIdAndDateRange(@Param("userId") Long userId,
                                             @Param("startDate") LocalDate startDate,
                                             @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT f FROM FoodLog f WHERE f.userId = :userId AND f.logDate >= :since ORDER BY f.logDate DESC")
+    List<FoodLog> findByUserIdAndLogDateAfter(@Param("userId") Long userId, @Param("since") LocalDate since);
 }

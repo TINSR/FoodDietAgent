@@ -92,6 +92,10 @@ public class FoodLogService {
         return foodRepository.searchByName(keyword);
     }
 
+    public List<Food> getAllFoods() {
+        return foodRepository.findAll();
+    }
+
     @Transactional
     public boolean deleteFoodLog(Long id) {
         if (foodLogRepository.existsById(id)) {

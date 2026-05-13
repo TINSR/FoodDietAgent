@@ -30,7 +30,17 @@ public class AgentController {
         if (summary == null) {
             return ApiResponse.error(404, "用户不存在");
         }
-        AgentResponse response = foodAgentService.analyzeAndRecommend(summary);
+        AgentResponse response = foodAgentService.analyzeAndRecommend(summary, request.getForce() != null && request.getForce());
+        return ApiResponse.success(response);
+    }
+
+    @GetMapping("/analyze")
+    public ApiResponse<AgentResponse> analyzeGet(@RequestParam Long userId, @RequestParam(required = false) Boolean force) {
+        DailySummaryResponse summary = summaryService.getDailySummary(userId, LocalDate.now());
+        if (summary == null) {
+            return ApiResponse.error(404, "用户不存在");
+        }
+        AgentResponse response = foodAgentService.analyzeAndRecommend(summary, force != null && force);
         return ApiResponse.success(response);
     }
 
@@ -51,10 +61,13 @@ public class AgentController {
 class AnalyzeRequest {
     private Long userId;
     private LocalDate date;
+    private Boolean force;
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
+    public Boolean getForce() { return force; }
+    public void setForce(Boolean force) { this.force = force; }
 }
 
 class ChatRequest {
