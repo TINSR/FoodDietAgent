@@ -224,11 +224,24 @@
         <!-- Add Page -->
         <div id="page-add" class="page">
             <div class="section-title">➕ 添加食物</div>
-            <div class="search-box" style="margin-bottom:15px;">
-                <input type="text" class="search-input" id="search-keyword" placeholder="搜索食物，如：米饭、苹果">
-                <button class="search-btn" onclick="searchFood()">搜索</button>
+
+            <!-- Tab: 食物库 / 我的食物库 -->
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button class="form-btn" id="tab-system-foods" onclick="switchFoodTab('system')" style="flex:1;background:#4CAF50;">🏪 食物库</button>
+                <button class="form-btn" id="tab-my-foods" onclick="switchFoodTab('my')" style="flex:1;background:#8BC34A;">🍳 我的食物库</button>
             </div>
-            <div class="food-list" id="search-results" style="margin-bottom:15px;"></div>
+
+            <div id="add-system-section">
+                <div class="search-box" style="margin-bottom:15px;">
+                    <input type="text" class="search-input" id="search-keyword" placeholder="搜索食物，如：米饭、苹果">
+                    <button class="search-btn" onclick="searchFood()">搜索</button>
+                </div>
+                <div class="food-list" id="search-results" style="margin-bottom:15px;"></div>
+            </div>
+
+            <div id="add-my-section" style="display:none;">
+                <div id="my-foods-list" style="margin-bottom:15px;"></div>
+            </div>
 
             <!-- Pending batch add list -->
             <div id="pending-add-list" style="display:none;margin-bottom:15px;">
@@ -737,11 +750,50 @@
             document.getElementById('search-results').innerHTML = html;
         }
 
+        function switchFoodTab(tab) {
+            document.getElementById('add-system-section').style.display = tab === 'system' ? 'block' : 'none';
+            document.getElementById('add-my-section').style.display = tab === 'my' ? 'block' : 'none';
+            document.getElementById('tab-system-foods').style.background = tab === 'system' ? '#4CAF50' : '#999';
+            document.getElementById('tab-my-foods').style.background = tab === 'my' ? '#8BC34A' : '#999';
+            if (tab === 'my') loadMyFoodsForAdd();
+        }
+
+        async function loadMyFoodsForAdd() {
+            if (!currentUserId) return;
+            const container = document.getElementById('my-foods-list');
+            try {
+                const res = await fetch(`${API_BASE}/user-foods/${currentUserId}`);
+                const json = await res.json();
+                if (json.code === 200) {
+                    const list = json.data || [];
+                    if (!list.length) {
+                        container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">还没有自定义食物，去"我的"页面创建吧</div>';
+                        return;
+                    }
+                    container.innerHTML = list.map(f => `
+                        <div class="food-list-item" onclick="selectUserFood(${f.id}, '${f.name}', ${f.totalCalories}, ${f.carbs||0}, ${f.protein||0}, ${f.fat||0})">
+                            <div>
+                                <div class="food-list-name">⭐ ${f.name}</div>
+                                <div class="food-list-info">${f.cookingMethod || ''} · 碳水${(f.carbs||0).toFixed(1)}g · 蛋白质${(f.protein||0).toFixed(1)}g</div>
+                            </div>
+                            <div class="food-list-cal">${f.totalCalories} kcal</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) { container.innerHTML = '<div style="padding:20px;color:#999;">加载失败</div>'; }
+        }
+
         let pendingFoods = [];
 
         function selectFood(foodId, name, cal, protein, carbs, fat) {
             pendingFoods.push({ foodId, name, cal, protein, carbs, fat, weight: 100, mealType: '午餐' });
             renderPendingList();
+        }
+
+        function selectUserFood(userFoodId, name, cal, carbs, protein, fat) {
+            pendingFoods.push({ userFoodId, name, cal, protein, carbs, fat, weight: 100, mealType: '午餐' });
+            renderPendingList();
+        }
         }
 
         function renderPendingList() {
@@ -792,10 +844,16 @@
             let success = 0, failed = 0;
             for (const item of pendingFoods) {
                 try {
+                    const payload = { userId: currentUserId, weight: item.weight, mealType: item.mealType };
+                    if (item.userFoodId) {
+                        payload.userFoodId = item.userFoodId;
+                    } else {
+                        payload.foodId = item.foodId;
+                    }
                     const res = await fetch(`${API_BASE}/food/log`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: currentUserId, foodId: item.foodId, weight: item.weight, mealType: item.mealType })
+                        body: JSON.stringify(payload)
                     });
                     if (res.ok) success++;
                     else failed++;

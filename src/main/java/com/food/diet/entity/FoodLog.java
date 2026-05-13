@@ -14,6 +14,8 @@ public class FoodLog {
     private Long id;
     private Long userId;
     private Long foodId;
+    @Column(name = "user_food_id")
+    private Long userFoodId;
     private String foodName;
     private Integer weight;
     private Integer calories;
@@ -35,6 +37,8 @@ public class FoodLog {
     public void setUserId(Long userId) { this.userId = userId; }
     public Long getFoodId() { return foodId; }
     public void setFoodId(Long foodId) { this.foodId = foodId; }
+    public Long getUserFoodId() { return userFoodId; }
+    public void setUserFoodId(Long userFoodId) { this.userFoodId = userFoodId; }
     public String getFoodName() { return foodName; }
     public void setFoodName(String foodName) { this.foodName = foodName; }
     public Integer getWeight() { return weight; }

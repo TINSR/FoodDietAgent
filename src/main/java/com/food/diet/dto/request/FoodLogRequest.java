@@ -7,6 +7,7 @@ public class FoodLogRequest {
     private Long userId;
     private Long foodId;
     private String foodName;
+    private Long userFoodId;
     @NotNull(message = "重量不能为空")
     private Integer weight;
     @NotNull(message = "餐次不能为空")
@@ -18,6 +19,8 @@ public class FoodLogRequest {
     public void setFoodId(Long foodId) { this.foodId = foodId; }
     public String getFoodName() { return foodName; }
     public void setFoodName(String foodName) { this.foodName = foodName; }
+    public Long getUserFoodId() { return userFoodId; }
+    public void setUserFoodId(Long userFoodId) { this.userFoodId = userFoodId; }
     public Integer getWeight() { return weight; }
     public void setWeight(Integer weight) { this.weight = weight; }
     public String getMealType() { return mealType; }

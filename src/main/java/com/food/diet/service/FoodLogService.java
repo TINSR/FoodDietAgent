@@ -3,8 +3,10 @@ package com.food.diet.service;
 import com.food.diet.dto.request.FoodLogRequest;
 import com.food.diet.entity.Food;
 import com.food.diet.entity.FoodLog;
+import com.food.diet.entity.UserFood;
 import com.food.diet.repository.FoodLogRepository;
 import com.food.diet.repository.FoodRepository;
+import com.food.diet.repository.UserFoodRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +21,16 @@ public class FoodLogService {
 
     private final FoodLogRepository foodLogRepository;
     private final FoodRepository foodRepository;
+    private final UserFoodRepository userFoodRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
     public FoodLogService(FoodLogRepository foodLogRepository,
                          FoodRepository foodRepository,
+                         UserFoodRepository userFoodRepository,
                          RedisTemplate<String, Object> redisTemplate) {
         this.foodLogRepository = foodLogRepository;
         this.foodRepository = foodRepository;
+        this.userFoodRepository = userFoodRepository;
         this.redisTemplate = redisTemplate;
     }
 
@@ -36,12 +41,24 @@ public class FoodLogService {
         FoodLog foodLog = new FoodLog();
         foodLog.setUserId(request.getUserId());
         foodLog.setFoodId(request.getFoodId());
+        foodLog.setUserFoodId(request.getUserFoodId());
         foodLog.setFoodName(request.getFoodName());
         foodLog.setWeight(request.getWeight());
         foodLog.setMealType(request.getMealType());
         foodLog.setLogDate(LocalDate.now());
 
-        if (request.getFoodId() != null) {
+        if (request.getUserFoodId() != null) {
+            UserFood uf = userFoodRepository.findById(request.getUserFoodId()).orElse(null);
+            if (uf != null) {
+                foodLog.setFoodName(uf.getName() != null ? uf.getName() : "自定义食物");
+                BigDecimal factor = new BigDecimal(request.getWeight()).divide(new BigDecimal(100), 4, RoundingMode.HALF_UP);
+                BigDecimal ufCal = uf.getTotalCalories() != null ? new BigDecimal(uf.getTotalCalories()) : BigDecimal.ZERO;
+                foodLog.setCalories(ufCal.multiply(factor).intValue());
+                foodLog.setCarbs(uf.getCarbs() != null ? uf.getCarbs().multiply(factor) : BigDecimal.ZERO);
+                foodLog.setProtein(uf.getProtein() != null ? uf.getProtein().multiply(factor) : BigDecimal.ZERO);
+                foodLog.setFat(uf.getFat() != null ? uf.getFat().multiply(factor) : BigDecimal.ZERO);
+            }
+        } else if (request.getFoodId() != null) {
             Food food = foodRepository.findById(request.getFoodId()).orElse(null);
             if (food != null) {
                 foodLog.setFoodName(food.getName() != null ? food.getName() : "未知食物");

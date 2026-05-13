@@ -47,4 +47,16 @@ public class FoodLogController {
         List<Food> foods = foodLogService.searchFoods(keyword);
         return ApiResponse.success(foods);
     }
+
+    @GetMapping("/foods/search")
+    public ApiResponse<List<Food>> searchFoodsAlt(@RequestParam String keyword) {
+        List<Food> foods = foodLogService.searchFoods(keyword);
+        return ApiResponse.success(foods);
+    }
+
+    @GetMapping("/foods/all")
+    public ApiResponse<List<Food>> getAllFoods() {
+        List<Food> foods = foodLogService.getAllFoods();
+        return ApiResponse.success(foods);
+    }
 }
