@@ -1,5 +1,6 @@
 package com.food.diet.service;
 
+import com.food.diet.dto.request.ConfirmRequest;
 import com.food.diet.dto.request.FoodLogRequest;
 import com.food.diet.entity.Food;
 import com.food.diet.entity.FoodLog;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class FoodLogService {
@@ -120,6 +122,7 @@ public class FoodLogService {
             foodLogRepository.deleteById(id);
             if (log != null) {
                 invalidateDailySummaryCache(log.getUserId());
+                invalidateAgentCache(log.getUserId());
             }
             return true;
         }
@@ -133,5 +136,58 @@ public class FoodLogService {
         } catch (Exception e) {
             // Redis not available, ignore
         }
+    }
+
+    private void invalidateAgentCache(Long userId) {
+        try {
+            Set<String> keys = redisTemplate.keys("agent:*:" + userId + ":*");
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+            }
+        } catch (Exception e) {
+            // Redis not available, ignore
+        }
+    }
+
+    /**
+     * 从识别结果添加食物（用于识别确认后）
+     */
+    @Transactional
+    public FoodLogResult addFoodFromRecognition(ConfirmRequest request) {
+        FoodLog foodLog = new FoodLog();
+        foodLog.setUserId(request.getUserId());
+        foodLog.setMealType(request.getMealType());
+        foodLog.setLogDate(LocalDate.now());
+        foodLog.setFoodName(request.getName());
+        foodLog.setCalories(request.getTotalCalories() != null ? request.getTotalCalories() : 0);
+        foodLog.setWeight(request.getTotalWeight() != null ? request.getTotalWeight() : 100);
+
+        // 计算宏量营养素总和
+        if (request.getIngredients() != null) {
+            BigDecimal totalProtein = BigDecimal.ZERO;
+            BigDecimal totalCarbs = BigDecimal.ZERO;
+            BigDecimal totalFat = BigDecimal.ZERO;
+            for (var ing : request.getIngredients()) {
+                if (ing.getProtein() != null) totalProtein = totalProtein.add(ing.getProtein());
+                if (ing.getCarbs() != null) totalCarbs = totalCarbs.add(ing.getCarbs());
+                if (ing.getFat() != null) totalFat = totalFat.add(ing.getFat());
+            }
+            foodLog.setProtein(totalProtein);
+            foodLog.setCarbs(totalCarbs);
+            foodLog.setFat(totalFat);
+        }
+
+        FoodLog saved = foodLogRepository.save(foodLog);
+        invalidateDailySummaryCache(request.getUserId());
+
+        FoodLogResult result = new FoodLogResult();
+        result.setFoodLogId(saved.getId());
+        return result;
+    }
+
+    public static class FoodLogResult {
+        private Long foodLogId;
+        public Long getFoodLogId() { return foodLogId; }
+        public void setFoodLogId(Long foodLogId) { this.foodLogId = foodLogId; }
     }
 }

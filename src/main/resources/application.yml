@@ -38,6 +38,11 @@ ai:
     base-url: https://api.moonshot.cn/v1
     model: moonshot-v1-8k
 
+  baidu:
+    app-id: ${BAIDU_APP_ID:}
+    api-key: ${BAIDU_API_KEY:}
+    secret-key: ${BAIDU_SECRET_KEY:}
+
 logging:
   level:
     com.food.diet: INFO

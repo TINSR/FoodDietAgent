@@ -51,6 +51,7 @@ public class FoodAgent {
 
     public AgentResponse analyzeAndRecommend(DailySummaryResponse summary) {
         String nextMeal = mealTypeInferer.inferNextMealFromMeals(summary.getMeals());
+        String lastEatenMeal = mealTypeInferer.inferLastEatenMeal(summary.getMeals());
         String goal = getUserGoal(summary.getUserId());
         List<Long> dislikedIds = preferenceService.getDislikedFoodIds(summary.getUserId());
 
@@ -85,7 +86,7 @@ public class FoodAgent {
         // 构建增强上下文
         String eatingContext = historyService.buildEatingContext(summary.getUserId());
         String recipeOptions = formatRecipeOptions(filtered);
-        String prompt = buildEnhancedPrompt(summary, recipeOptions, eatingContext, topFoods, recentlyRecommended);
+        String prompt = buildEnhancedPrompt(summary, recipeOptions, eatingContext, topFoods, recentlyRecommended, nextMeal, lastEatenMeal);
         String response = chatLanguageModel.generate(prompt);
 
         AgentResponse agentResponse = parseAgentResponse(response, summary);
@@ -141,16 +142,17 @@ public class FoodAgent {
                                        List<String> recentlyRecommended,
                                        String goal) {
         String lowerMsg = userMessage.toLowerCase();
+        String nextMeal = mealTypeInferer.inferNextMealFromMeals(summary.getMeals());
 
         String prompt;
         if (lowerMsg.contains("热量分析") || lowerMsg.contains("今日热量")) {
             prompt = buildCalorieAnalysisPrompt(summary, todayContext, weeklyContext, topFoods, goal);
         } else if (lowerMsg.contains("菜品推荐") || lowerMsg.contains("推荐") || lowerMsg.contains("食谱")) {
-            prompt = buildRecipeRecommendPrompt(summary, todayContext, eatingContext, recipeOptions, topFoods, recentlyRecommended, goal);
+            prompt = buildRecipeRecommendPrompt(summary, todayContext, eatingContext, recipeOptions, topFoods, recentlyRecommended, goal, nextMeal);
         } else if (lowerMsg.contains("近热量") || lowerMsg.contains("周报") || lowerMsg.contains("7天") || lowerMsg.contains("报告")) {
             prompt = buildWeeklyReportPrompt(summary, weeklyContext, topFoods, goal);
         } else {
-            prompt = buildGeneralPrompt(summary, userMessage, todayContext, weeklyContext, recipeOptions, goal);
+            prompt = buildGeneralPrompt(summary, userMessage, todayContext, weeklyContext, recipeOptions, goal, nextMeal);
         }
         return prompt;
     }
@@ -202,7 +204,7 @@ public class FoodAgent {
     private String buildRecipeRecommendPrompt(DailySummaryResponse summary, String todayContext,
                                                String eatingContext, String recipeOptions,
                                                List<String> topFoods, List<String> recentlyRecommended,
-                                               String goal) {
+                                               String goal, String nextMeal) {
         String avoidance = recentlyRecommended.isEmpty() ? "" : "【避免重复】最近推荐过：" + String.join("、", recentlyRecommended.stream().limit(5).toList());
         return String.format("""
                 你是一个专业、热情的健康饮食顾问，名字叫小食。用户正在请求今日菜品推荐。
@@ -217,6 +219,7 @@ public class FoodAgent {
                 - 目标热量：%d kcal，已摄入：%d kcal，剩余：%d kcal
                 - 蛋白质进度：%.1f%%，碳水进度：%.1f%%，脂肪进度：%.1f%%
                 - 用户目标：%s
+                - 当前推荐：%s
 
                 今日推荐食谱：
                 %s
@@ -227,11 +230,11 @@ public class FoodAgent {
                 3. 当前营养缺口（哪些宏量元素还差得多）
                 4. 剩余热量预算
 
-                给出2-3道最适合今晚（或下一餐）的菜品推荐，并说明推荐理由。
+                给出2-3道最适合%s的菜品推荐，并说明推荐理由。
 
                 请用JSON格式返回：
                 {
-                    "status": "推荐主题（如：补蛋白晚餐）",
+                    "status": "推荐主题（如：补蛋白%s）",
                     "advice": "简洁说明推荐1-2道菜的核心理由，1-2段话",
                     "tips": "一句实用小提醒"
                 }
@@ -246,7 +249,10 @@ public class FoodAgent {
                 summary.getCarbsProgress() != null ? summary.getCarbsProgress() : 0,
                 summary.getFatProgress() != null ? summary.getFatProgress() : 0,
                 goal,
-                recipeOptions
+                nextMeal,
+                recipeOptions,
+                nextMeal,
+                nextMeal
         );
     }
 
@@ -282,7 +288,7 @@ public class FoodAgent {
 
     private String buildGeneralPrompt(DailySummaryResponse summary, String userMessage,
                                         String todayContext, String weeklyContext,
-                                        String recipeOptions, String goal) {
+                                        String recipeOptions, String goal, String nextMeal) {
         return String.format("""
                 你是一个专业、亲切的健康饮食顾问，名字叫小食。
 
@@ -293,6 +299,7 @@ public class FoodAgent {
                 用户今日饮食情况：
                 - 目标热量：%d kcal，已摄入：%d kcal，剩余：%d kcal
                 - 蛋白质进度：%.1f%%，碳水进度：%.1f%%，脂肪进度：%.1f%%
+                - 当前推荐：%s
 
                 用户问题：%s
 
@@ -315,6 +322,7 @@ public class FoodAgent {
                 summary.getProteinProgress() != null ? summary.getProteinProgress() : 0,
                 summary.getCarbsProgress() != null ? summary.getCarbsProgress() : 0,
                 summary.getFatProgress() != null ? summary.getFatProgress() : 0,
+                nextMeal,
                 userMessage,
                 recipeOptions
         );
@@ -366,10 +374,18 @@ public class FoodAgent {
 
     private String buildEnhancedPrompt(DailySummaryResponse summary, String recipeOptions,
                                        String eatingContext, List<String> topFoods,
-                                       List<String> recentlyRecommended) {
+                                       List<String> recentlyRecommended,
+                                       String nextMeal, String lastEatenMeal) {
         String avoidance = "";
         if (recentlyRecommended != null && !recentlyRecommended.isEmpty()) {
             avoidance = "【避免重复】最近推荐过：" + String.join("、", recentlyRecommended.stream().limit(5).toList()) + "\n";
+        }
+
+        String mealContext;
+        if (lastEatenMeal != null) {
+            mealContext = String.format("- 用户上一餐吃了 %s，现在推荐 %s", lastEatenMeal, nextMeal);
+        } else {
+            mealContext = String.format("- 用户今日尚未进食，推荐先吃 %s", nextMeal);
         }
 
         return String.format("""
@@ -378,6 +394,7 @@ public class FoodAgent {
                 %s
                 %s
                 用户今日饮食情况：
+                %s
                 - 目标热量：%d kcal
                 - 已摄入热量：%d kcal
                 - 剩余热量：%d kcal
@@ -404,6 +421,7 @@ public class FoodAgent {
                 """,
                 eatingContext,
                 avoidance,
+                mealContext,
                 summary.getTargetCalories(),
                 summary.getConsumedCalories(),
                 summary.getRemainingCalories(),

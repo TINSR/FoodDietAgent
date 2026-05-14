@@ -124,6 +124,31 @@
         /* Loading */
         .loading { text-align: center; padding: 20px; color: #999; font-size: 13px; }
         .section-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+
+        /* Recognition Camera Button */
+        .camera-btn { background: linear-gradient(135deg, #FF9800, #FF5722); color: #fff; border: none; padding: 12px 20px; border-radius: 25px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+        .camera-btn:active { transform: scale(0.98); }
+
+        /* Recognition Modal */
+        .recognition-type-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; margin-bottom: 10px; }
+        .recognition-type-badge.dish { background: #FFF3E0; color: #FF9800; }
+        .recognition-type-badge.packaged { background: #E3F2FD; color: #2196F3; }
+        .ingredient-item { background: #f9f9f9; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+        .ingredient-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .ingredient-name { flex: 1; font-size: 13px; font-weight: 600; }
+        .ingredient-match { font-size: 10px; padding: 2px 6px; border-radius: 8px; background: #E8F5E9; color: #4CAF50; }
+        .ingredient-match.unmatched { background: #FFF3E0; color: #FF9800; }
+        .ingredient-input { width: 60px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 13px; }
+        .ingredient-input.weight { width: 70px; }
+        .ingredient-cal { font-size: 12px; color: #4CAF50; min-width: 70px; text-align: right; }
+        .total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #4CAF50; color: #fff; border-radius: 8px; margin: 10px 0; }
+        .total-label { font-size: 14px; font-weight: bold; }
+        .total-value { font-size: 18px; font-weight: bold; }
+        .save-options { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+        .save-option { display: flex; align-items: center; gap: 8px; padding: 10px; background: #f5f5f5; border-radius: 8px; cursor: pointer; }
+        .save-option input[type="checkbox"] { width: 18px; height: 18px; }
+        .save-option-label { font-size: 13px; }
+        .barcode-input { display: flex; gap: 8px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -224,6 +249,15 @@
         <!-- Add Page -->
         <div id="page-add" class="page">
             <div class="section-title">➕ 添加食物</div>
+
+            <!-- Recognition Options -->
+            <button class="camera-btn" onclick="openRecognitionModal()" style="width:100%;">
+                📷 拍照识别食物热量
+            </button>
+            <div class="barcode-input">
+                <input type="text" class="form-input" id="barcode-input" placeholder="或输入条形码（如：6901234567890）">
+                <button class="search-btn" onclick="lookupBarcode()">查询</button>
+            </div>
 
             <!-- Tab: 食物库 / 我的食物库 -->
             <div style="display:flex;gap:8px;margin-bottom:12px;">
@@ -347,6 +381,17 @@
         </div>
     </div>
 
+    <!-- Recognition Modal -->
+    <div class="modal" id="recognition-modal">
+        <div class="modal-content" id="recognition-modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📷 识别结果</div>
+                <div class="modal-close" onclick="closeRecognitionModal()">&times;</div>
+            </div>
+            <div id="recognition-result"></div>
+        </div>
+    </div>
+
     <script>
         const API_BASE = 'http://localhost:8080/api';
         let currentUserId = null;
@@ -424,6 +469,35 @@
             }
         }
 
+        async function deleteFoodLogItem(id) {
+            if (!confirm('确定删除这条记录？')) return;
+            try {
+                const res = await fetch(`${API_BASE}/food/log/${id}`, { method: 'DELETE' });
+                const json = await res.json();
+                if (json.code === 200) {
+                    loadTodaySummary(currentSelectedDate);
+                } else {
+                    alert('删除失败');
+                }
+            } catch (e) {
+                alert('删除失败');
+            }
+        }
+
+        async function loadAgentRecommendation() {
+            if (!currentUserId) return;
+            const date = currentSelectedDate || new Date().toISOString().split('T')[0];
+            try {
+                const res = await fetch(`${API_BASE}/summary/${currentUserId}/${date}/with-advice`);
+                const json = await res.json();
+                if (json.code === 200 && json.data) {
+                    updateAgentUI(json.data);
+                }
+            } catch (e) {
+                console.error('Failed to load agent recommendation', e);
+            }
+        }
+
         function updateSummaryUI(data) {
             // Calorie ring
             const consumed = data.consumedCalories || 0;
@@ -483,12 +557,7 @@
             document.getElementById('fat-bar').style.width = Math.min(100, fatP) + '%';
 
             // AI Advice
-            if (data.agentAdvice) {
-                document.getElementById('advice-card').style.display = 'block';
-                document.getElementById('advice-text').textContent = data.agentAdvice;
-            } else {
-                document.getElementById('advice-card').style.display = 'none';
-            }
+            document.getElementById('advice-card').style.display = 'none';
 
             // Meals
             let mealsHtml = '';
@@ -506,6 +575,7 @@
                                             <div class="food-info">${f.weight || 0}g</div>
                                         </div>
                                         <div class="food-cal">${f.calories || 0} kcal</div>
+                                        <button onclick="deleteFoodLogItem(${f.id})" style="color:#999;background:none;border:none;cursor:pointer;padding:0 4px;">✕</button>
                                     </div>
                                 `).join('')}
                             </div>
@@ -550,7 +620,8 @@
                     saveChatHistory();
 
                     if (json.data.recipes && json.data.recipes.length > 0) {
-                        document.getElementById('ai-recipe-section').style.display = 'block';
+                        const recipeSection = document.getElementById('ai-recipe-section');
+                        if (recipeSection) recipeSection.style.display = 'block';
                         let recipesHtml = '';
                         json.data.recipes.forEach(r => {
                             recipesHtml += `
@@ -567,21 +638,27 @@
                                 </div>
                             `;
                         });
-                        document.getElementById('ai-recipes-container').innerHTML = recipesHtml;
+                        const recipesContainer = document.getElementById('ai-recipes-container');
+                        if (recipesContainer) recipesContainer.innerHTML = recipesHtml;
                     }
                 } else {
+                    console.error('API error:', json.code, json.message);
                     addChatMessage('ai', json.message || '分析失败，请稍后重试');
                     saveChatHistory();
                 }
             } catch (e) {
+                console.error('Request failed:', e);
                 const messagesDiv = document.getElementById('chat-messages');
-                const lastMsg = messagesDiv.lastElementChild;
+                const lastMsg = messagesDiv ? messagesDiv.lastElementChild : null;
                 if (lastMsg && lastMsg.textContent === '正在分析...') lastMsg.remove();
-                addChatMessage('ai', '网络错误，请稍后重试');
-                saveChatHistory();
+                if (messagesDiv) {
+                    addChatMessage('ai', '网络错误，请稍后重试');
+                    saveChatHistory();
+                }
             }
         }
 
+        const MAX_CHAT_MESSAGES = 50;
         function saveChatHistory() {
             const messagesDiv = document.getElementById('chat-messages');
             const msgs = [];
@@ -589,8 +666,10 @@
                 const isUser = m.style.alignSelf === 'flex-end';
                 msgs.push({ type: isUser ? 'user' : 'ai', text: m.dataset.original || m.innerText });
             });
+            // Keep only last MAX_CHAT_MESSAGES
+            const trimmed = msgs.length > MAX_CHAT_MESSAGES ? msgs.slice(-MAX_CHAT_MESSAGES) : msgs;
             if (currentUserId) {
-                localStorage.setItem('chat_' + currentUserId, JSON.stringify(msgs));
+                localStorage.setItem('chat_' + currentUserId, JSON.stringify(trimmed));
             }
         }
 
@@ -660,7 +739,8 @@
                         </div>
                     `;
                 });
-                document.getElementById('ai-recipes-container').innerHTML = recipesHtml;
+                const recipesContainer = document.getElementById('ai-recipes-container');
+                if (recipesContainer) recipesContainer.innerHTML = recipesHtml;
             }
         }
 
@@ -793,7 +873,6 @@
         function selectUserFood(userFoodId, name, cal, carbs, protein, fat) {
             pendingFoods.push({ userFoodId, name, cal, protein, carbs, fat, weight: 100, mealType: '午餐' });
             renderPendingList();
-        }
         }
 
         function renderPendingList() {
@@ -1205,6 +1284,302 @@
             if (currentUserId) {
                 loadAgentRecommendation();
             }
+        }
+
+        // ==================== Food Recognition ====================
+
+        let currentRecognitionData = null;
+
+        function openRecognitionModal() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (ev) => {
+                    const base64 = ev.target.result.split(',')[1];
+                    await recognizeFood(base64);
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
+
+        async function recognizeFood(imageBase64) {
+            if (!currentUserId) {
+                alert('请先登录');
+                return;
+            }
+            const modal = document.getElementById('recognition-modal');
+            const resultDiv = document.getElementById('recognition-result');
+            resultDiv.innerHTML = '<div class="loading">🔄 AI正在识别中...</div>';
+            modal.classList.add('active');
+
+            try {
+                const res = await fetch(`${API_BASE}/food/recognize/image`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: imageBase64,
+                        userId: currentUserId,
+                        mealType: inferCurrentMealType()
+                    })
+                });
+                const json = await res.json();
+                if (json.code === 200) {
+                    currentRecognitionData = json.data;
+                    renderRecognitionResult(json.data);
+                } else {
+                    resultDiv.innerHTML = `<div style="text-align:center;color:#F44336;padding:20px;">${json.message || '识别失败'}</div>`;
+                }
+            } catch (e) {
+                resultDiv.innerHTML = '<div style="text-align:center;color:#F44336;padding:20px;">网络错误，请重试</div>';
+            }
+        }
+
+        async function lookupBarcode() {
+            if (!currentUserId) {
+                alert('请先登录');
+                return;
+            }
+            const barcode = document.getElementById('barcode-input').value.trim();
+            if (!barcode) {
+                alert('请输入条形码');
+                return;
+            }
+            const modal = document.getElementById('recognition-modal');
+            const resultDiv = document.getElementById('recognition-result');
+            resultDiv.innerHTML = '<div class="loading">🔄 正在查询...</div>';
+            modal.classList.add('active');
+
+            try {
+                const res = await fetch(`${API_BASE}/food/recognize/barcode/${barcode}?userId=${currentUserId}`);
+                const json = await res.json();
+                if (json.code === 200) {
+                    currentRecognitionData = json.data;
+                    renderRecognitionResult(json.data);
+                } else {
+                    resultDiv.innerHTML = `<div style="text-align:center;color:#F44336;padding:20px;">${json.message || '查询失败'}</div>`;
+                }
+            } catch (e) {
+                resultDiv.innerHTML = '<div style="text-align:center;color:#F44336;padding:20px;">网络错误，请重试</div>';
+            }
+        }
+
+        function inferCurrentMealType() {
+            const hour = new Date().getHours();
+            if (hour >= 6 && hour < 10) return '早餐';
+            if (hour >= 10 && hour < 15) return '午餐';
+            if (hour >= 17 && hour < 21) return '晚餐';
+            return '加餐';
+        }
+
+        function renderRecognitionResult(data) {
+            const resultDiv = document.getElementById('recognition-result');
+            const typeBadge = data.type === 'PACKAGED'
+                ? '<span class="recognition-type-badge packaged">📦 包装食品</span>'
+                : '<span class="recognition-type-badge dish">🍳 家常菜</span>';
+
+            let ingredientsHtml = '';
+            if (data.ingredients && data.ingredients.length > 0) {
+                ingredientsHtml = data.ingredients.map((ing, idx) => {
+                    const matchClass = ing.matchedFoodId ? '' : 'unmatched';
+                    const matchText = ing.matchedFoodId ? '已匹配' : '未匹配';
+                    return `
+                        <div class="ingredient-item">
+                            <div class="ingredient-row">
+                                <span class="ingredient-name">${ing.name}</span>
+                                <span class="ingredient-match ${matchClass}">${matchText}</span>
+                            </div>
+                            <div class="ingredient-row">
+                                <input type="number" class="ingredient-input weight" value="${ing.weight || 100}"
+                                    id="rec-ing-w-${idx}" onchange="updateIngredientCalc(${idx})">
+                                <span style="font-size:12px;color:#666;">克</span>
+                                <input type="number" class="ingredient-input" value="${ing.calories || 0}"
+                                    id="rec-ing-cal-${idx}" placeholder="kcal" onchange="updateIngredientCalc(${idx})">
+                                <span style="font-size:12px;color:#666;">kcal</span>
+                            </div>
+                            <div style="font-size:11px;color:#999;margin-top:4px;">
+                                蛋白质 <span id="rec-ing-p-${idx}">${(ing.protein || 0).toFixed(1)}</span>g ·
+                                碳水 <span id="rec-ing-c-${idx}">${(ing.carbs || 0).toFixed(1)}</span>g ·
+                                脂肪 <span id="rec-ing-f-${idx}">${(ing.fat || 0).toFixed(1)}</span>g
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else if (data.type === 'PACKAGED') {
+                ingredientsHtml = `
+                    <div class="ingredient-item">
+                        <div class="ingredient-row">
+                            <span class="ingredient-name">${data.name}</span>
+                        </div>
+                        <div class="ingredient-row">
+                            <input type="number" class="ingredient-input weight" value="${data.totalWeight || 100}"
+                                id="rec-ing-w-0" onchange="updatePackagedCalc()">
+                            <span style="font-size:12px;color:#666;">克</span>
+                            <span style="flex:1;text-align:right;font-size:14px;color:#4CAF50;font-weight:bold;">
+                                共 <span id="rec-total-cal">${data.totalCalories || 0}</span> kcal
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            resultDiv.innerHTML = `
+                ${typeBadge}
+                <div style="font-size:16px;font-weight:bold;margin-bottom:10px;">${data.name}</div>
+                <div id="rec-ingredients-list">${ingredientsHtml}</div>
+                ${data.ingredients && data.ingredients.length > 0 ? `
+                    <div class="total-row">
+                        <span class="total-label">总热量</span>
+                        <span class="total-value" id="rec-grand-total">${data.totalCalories || 0} kcal</span>
+                    </div>
+                ` : ''}
+
+                <div class="form-group" style="margin-top:10px;">
+                    <label class="form-label">餐次</label>
+                    <select class="form-select" id="rec-meal-type">
+                        <option value="早餐" ${inferCurrentMealType()==='早餐'?'selected':''}>早餐</option>
+                        <option value="午餐" ${inferCurrentMealType()==='午餐'?'selected':''}>午餐</option>
+                        <option value="晚餐" ${inferCurrentMealType()==='晚餐'?'selected':''}>晚餐</option>
+                        <option value="加餐" ${inferCurrentMealType()==='加餐'?'selected':''}>加餐</option>
+                    </select>
+                </div>
+
+                <div class="save-options">
+                    <label class="save-option">
+                        <input type="checkbox" id="rec-save-food" checked>
+                        <span class="save-option-label">📦 保存为我的单品（下次可直接搜索使用）</span>
+                    </label>
+                    <label class="save-option">
+                        <input type="checkbox" id="rec-save-recipe">
+                        <span class="save-option-label">🍳 保存为个人菜谱</span>
+                    </label>
+                </div>
+
+                <div id="rec-recipe-name-group" style="display:none;" class="form-group">
+                    <label class="form-label">菜谱名称</label>
+                    <input type="text" class="form-input" id="rec-recipe-name" placeholder="如：我的宫保鸡丁">
+                </div>
+
+                <button class="form-btn" onclick="confirmRecognition()" style="margin-top:10px;">✓ 确认添加</button>
+            `;
+
+            // Toggle recipe name input
+            document.getElementById('rec-save-recipe').addEventListener('change', (e) => {
+                document.getElementById('rec-recipe-name-group').style.display = e.target.checked ? 'block' : 'none';
+            });
+        }
+
+        function updateIngredientCalc(idx) {
+            // Recalculate total when user changes values
+            const ingredients = currentRecognitionData.ingredients || [];
+            const weightInput = document.getElementById(`rec-ing-w-${idx}`);
+            const calInput = document.getElementById(`rec-ing-cal-${idx}`);
+            if (!weightInput || !calInput) return;
+
+            const weight = parseInt(weightInput.value) || 100;
+            const baseCalPer100 = ingredients[idx]?.calories || 0;
+            const factor = weight / 100;
+            const newCal = Math.round(baseCalPer100 * factor);
+            calInput.value = newCal;
+
+            // Recalculate grand total
+            let totalCal = 0;
+            for (let i = 0; i < ingredients.length; i++) {
+                const wInput = document.getElementById(`rec-ing-w-${i}`);
+                const cInput = document.getElementById(`rec-ing-cal-${i}`);
+                if (wInput && cInput) {
+                    totalCal += parseInt(cInput.value) || 0;
+                }
+            }
+            document.getElementById('rec-grand-total').textContent = totalCal + ' kcal';
+        }
+
+        function updatePackagedCalc() {
+            const weight = parseInt(document.getElementById('rec-ing-w-0').value) || 100;
+            const baseCal = currentRecognitionData?.totalCalories || 0;
+            const baseWeight = currentRecognitionData?.totalWeight || 100;
+            const totalCal = Math.round(baseCal * weight / baseWeight);
+            document.getElementById('rec-total-cal').textContent = totalCal;
+        }
+
+        async function confirmRecognition() {
+            if (!currentRecognitionData || !currentUserId) return;
+
+            const mealType = document.getElementById('rec-meal-type').value;
+            const saveAsFood = document.getElementById('rec-save-food').checked;
+            const saveAsRecipe = document.getElementById('rec-save-recipe').checked;
+            const recipeName = document.getElementById('rec-recipe-name')?.value || '';
+
+            // Build ingredients list
+            const ingredients = [];
+            let totalCalories = 0;
+            let totalWeight = 0;
+
+            if (currentRecognitionData.type === 'PACKAGED') {
+                const weight = parseInt(document.getElementById('rec-ing-w-0').value) || 100;
+                totalWeight = weight;
+                totalCalories = parseInt(document.getElementById('rec-total-cal').textContent) || 0;
+            } else if (currentRecognitionData.ingredients) {
+                currentRecognitionData.ingredients.forEach((ing, idx) => {
+                    const wInput = document.getElementById(`rec-ing-w-${idx}`);
+                    const cInput = document.getElementById(`rec-ing-cal-${idx}`);
+                    const weight = parseInt(wInput?.value) || 100;
+                    const cal = parseInt(cInput?.value) || 0;
+                    totalCalories += cal;
+                    totalWeight += weight;
+                    ingredients.push({
+                        name: ing.name,
+                        weight: weight,
+                        calories: cal,
+                        protein: ing.protein || 0,
+                        carbs: ing.carbs || 0,
+                        fat: ing.fat || 0,
+                        matchedFoodId: ing.matchedFoodId,
+                        matchedCustomFoodId: ing.matchedCustomFoodId
+                    });
+                });
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/food/recognize/confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        mealType: mealType,
+                        recognitionType: currentRecognitionData.type,
+                        name: currentRecognitionData.name,
+                        ingredients: ingredients,
+                        totalCalories: totalCalories,
+                        totalWeight: totalWeight,
+                        saveAsCustomFood: saveAsFood,
+                        saveAsRecipe: saveAsRecipe,
+                        recipeName: recipeName,
+                        barcode: currentRecognitionData.barcode,
+                        servingSize: totalWeight
+                    })
+                });
+                const json = await res.json();
+                if (json.code === 200) {
+                    alert('添加成功！');
+                    closeRecognitionModal();
+                    document.querySelector('[data-tab="home"]').click();
+                } else {
+                    alert('保存失败：' + json.message);
+                }
+            } catch (e) {
+                alert('保存失败，请重试');
+            }
+        }
+
+        function closeRecognitionModal() {
+            document.getElementById('recognition-modal').classList.remove('active');
+            currentRecognitionData = null;
         }
 
         init();

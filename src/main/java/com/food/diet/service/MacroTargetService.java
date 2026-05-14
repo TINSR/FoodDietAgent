@@ -13,10 +13,12 @@ import java.util.Optional;
 @Service
 public class MacroTargetService {
 
+    // Updated based on 2025 longevity research (Harbin Medical University, 26000 subjects, 20 years)
+    // Optimal for lowest mortality risk: protein 12.5-25%, fat 25-37.5%, carbs 42.5-46%
     private static final Map<String, int[]> GOAL_MACRO_SPLITS = Map.of(
-        "减肥", new int[]{35, 35, 30},
-        "维持", new int[]{25, 45, 30},
-        "增肌", new int[]{30, 50, 20}
+        "减肥", new int[]{20, 45, 35},   // protein/carbs/fat - sustainable deficit
+        "维持", new int[]{20, 50, 30},   // balanced maintenance
+        "增肌", new int[]{25, 50, 25}    // higher protein for muscle synthesis
     );
 
     private static final int DEFAULT_FIBER = 25;

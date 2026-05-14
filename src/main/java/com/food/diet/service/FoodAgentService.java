@@ -15,15 +15,19 @@ import java.util.concurrent.TimeUnit;
 public class FoodAgentService {
 
     private static final String CHAT_CACHE_KEY = "agent:chat:%d:%s:%s";
-    private static final String ANALYZE_CACHE_KEY = "agent:analyze:%d:%s:%s";
+    private static final String ANALYZE_CACHE_KEY = "agent:analyze:%d:%s";
     private static final long CACHE_MINUTES = 30;
 
     private final FoodAgent foodAgent;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final MealTypeInferer mealTypeInferer;
 
-    public FoodAgentService(FoodAgent foodAgent, RedisTemplate<String, Object> redisTemplate) {
+    public FoodAgentService(FoodAgent foodAgent,
+                            RedisTemplate<String, Object> redisTemplate,
+                            MealTypeInferer mealTypeInferer) {
         this.foodAgent = foodAgent;
         this.redisTemplate = redisTemplate;
+        this.mealTypeInferer = mealTypeInferer;
     }
 
     private String buildFoodHash(DailySummaryResponse summary) {
@@ -34,6 +38,14 @@ public class FoodAgentService {
                     for (var food : meal.getFoods()) {
                         sb.append(food.getId()).append("_").append(food.getWeight()).append(",");
                     }
+                }
+            }
+        }
+        // Include meal types that have food to distinguish different eating states
+        if (summary.getMeals() != null) {
+            for (var meal : summary.getMeals()) {
+                if (meal.getFoods() != null && !meal.getFoods().isEmpty()) {
+                    sb.append("m:").append(meal.getMealType()).append(",");
                 }
             }
         }
@@ -100,7 +112,12 @@ public class FoodAgentService {
 
         String dateStr = summary.getDate() != null ? summary.getDate().toString() : LocalDate.now().toString();
         String foodHash = buildFoodHash(summary);
-        String cacheKey = String.format(CHAT_CACHE_KEY, summary.getUserId(), dateStr + ":" + foodHash, cacheType);
+        // For recipe queries, include nextMeal in cache key so time-of-day affects caching
+        String nextMealForCache = "";
+        if ("recipe".equals(cacheType)) {
+            nextMealForCache = mealTypeInferer.inferNextMealFromMeals(summary.getMeals());
+        }
+        String cacheKey = String.format(CHAT_CACHE_KEY, summary.getUserId(), dateStr + ":" + foodHash + ":" + nextMealForCache, cacheType);
 
         // Try cache first
         try {
