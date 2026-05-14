@@ -305,47 +305,70 @@
             <div id="user-food-library" style="display:none;margin-top:15px;"></div>
 
             <div id="profile-form" style="display:none;">
-                <div class="form-group">
-                    <label class="form-label">姓名</label>
-                    <input type="text" class="form-input" id="reg-name">
+                <div id="login-section">
+                    <div class="form-group">
+                        <label class="form-label">用户名</label>
+                        <input type="text" class="form-input" id="login-username" placeholder="输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="form-input" id="login-password" placeholder="输入密码">
+                    </div>
+                    <button class="form-btn" onclick="loginUser()" style="background:#2196F3;">登录</button>
+                    <button class="form-btn" onclick="showRegister()" style="margin-top:8px;background:#9E9E9E;">没有账号？去注册</button>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">年龄</label>
-                    <input type="number" class="form-input" id="reg-age">
+                <div id="register-section" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">用户名</label>
+                        <input type="text" class="form-input" id="reg-username" placeholder="设置用户名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="form-input" id="reg-password" placeholder="设置密码">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">姓名</label>
+                        <input type="text" class="form-input" id="reg-name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">年龄</label>
+                        <input type="number" class="form-input" id="reg-age">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">性别</label>
+                        <select class="form-select" id="reg-gender">
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">身高 (cm)</label>
+                        <input type="number" class="form-input" id="reg-height">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">体重 (kg)</label>
+                        <input type="number" class="form-input" id="reg-weight">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">目标</label>
+                        <select class="form-select" id="reg-goal">
+                            <option value="减肥">减肥</option>
+                            <option value="维持">维持</option>
+                            <option value="增肌">增肌</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">活动水平</label>
+                        <select class="form-select" id="reg-activity">
+                            <option value="久坐">久坐 (很少运动)</option>
+                            <option value="轻度">轻度 (每周运动1-3次)</option>
+                            <option value="中度">中度 (每周运动3-5次)</option>
+                            <option value="重度">重度 (每天高强度运动)</option>
+                        </select>
+                    </div>
+                    <button class="form-btn" onclick="registerUser()">注册</button>
+                    <button class="form-btn" onclick="showLogin()" style="margin-top:8px;background:#9E9E9E;">已有账号？去登录</button>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">性别</label>
-                    <select class="form-select" id="reg-gender">
-                        <option value="男">男</option>
-                        <option value="女">女</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">身高 (cm)</label>
-                    <input type="number" class="form-input" id="reg-height">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">体重 (kg)</label>
-                    <input type="number" class="form-input" id="reg-weight">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">目标</label>
-                    <select class="form-select" id="reg-goal">
-                        <option value="减肥">减肥</option>
-                        <option value="维持">维持</option>
-                        <option value="增肌">增肌</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">活动水平</label>
-                    <select class="form-select" id="reg-activity">
-                        <option value="久坐">久坐 (很少运动)</option>
-                        <option value="轻度">轻度 (每周运动1-3次)</option>
-                        <option value="中度">中度 (每周运动3-5次)</option>
-                        <option value="重度">重度 (每天高强度运动)</option>
-                    </select>
-                </div>
-                <button class="form-btn" onclick="registerUser()">保存</button>
             </div>
 
             <!-- Weekly Chart -->
@@ -1240,10 +1263,66 @@
         function showProfileForm() {
             const form = document.getElementById('profile-form');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            checkAuthStatus();
+        }
+
+        function showRegister() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('register-section').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('register-section').style.display = 'none';
+            document.getElementById('login-section').style.display = 'block';
+        }
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('register-section').style.display = 'none';
+            } else {
+                document.getElementById('login-section').style.display = 'block';
+                document.getElementById('register-section').style.display = 'none';
+            }
+        }
+
+        async function loginUser() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!username || !password) {
+                alert('请输入用户名和密码');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const json = await res.json();
+                if (json.code === 200) {
+                    localStorage.setItem('token', json.data.token);
+                    localStorage.setItem('userId', json.data.user.id);
+                    currentUserId = json.data.user.id;
+                    alert('登录成功');
+                    document.getElementById('profile-form').style.display = 'none';
+                    loadProfile();
+                    loadTodaySummary();
+                } else {
+                    alert(json.message || '登录失败');
+                }
+            } catch (e) {
+                alert('登录失败，请检查网络');
+            }
         }
 
         async function registerUser() {
             const data = {
+                username: document.getElementById('reg-username').value,
+                password: document.getElementById('reg-password').value,
                 name: document.getElementById('reg-name').value,
                 age: parseInt(document.getElementById('reg-age').value),
                 gender: document.getElementById('reg-gender').value,
@@ -1253,30 +1332,47 @@
                 activityLevel: document.getElementById('reg-activity').value
             };
 
+            if (!data.username || !data.password) {
+                alert('请输入用户名和密码');
+                return;
+            }
+
             try {
-                const res = await fetch(`${API_BASE}/user/register`, {
+                const res = await fetch(`${API_BASE}/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
                 const json = await res.json();
                 if (json.code === 200) {
-                    currentUserId = json.data.id;
-                    localStorage.setItem('userId', currentUserId);
+                    localStorage.setItem('token', json.data.token);
+                    localStorage.setItem('userId', json.data.user.id);
+                    currentUserId = json.data.user.id;
                     alert('注册成功');
                     document.getElementById('profile-form').style.display = 'none';
                     loadProfile();
                     loadTodaySummary();
+                } else {
+                    alert(json.message || '注册失败');
                 }
             } catch (e) {
-                alert('注册失败');
+                alert('注册失败，请检查网络');
             }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            currentUserId = null;
+            alert('已退出登录');
+            checkAuthStatus();
         }
 
         // Init
         function init() {
             const savedUserId = localStorage.getItem('userId');
-            if (savedUserId) {
+            const token = localStorage.getItem('token');
+            if (savedUserId && token) {
                 currentUserId = parseInt(savedUserId);
             }
             renderDatePicker();

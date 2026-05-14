@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public class UserResponse {
     private Long id;
+    private String username;
     private String name;
     private Integer age;
     private String gender;
@@ -15,6 +16,8 @@ public class UserResponse {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public Integer getAge() { return age; }
@@ -36,6 +39,7 @@ public class UserResponse {
 
     public static class Builder {
         private Long id;
+        private String username;
         private String name;
         private Integer age;
         private String gender;
@@ -46,6 +50,7 @@ public class UserResponse {
         private Integer dailyCalorieTarget;
 
         public Builder id(Long id) { this.id = id; return this; }
+        public Builder username(String username) { this.username = username; return this; }
         public Builder name(String name) { this.name = name; return this; }
         public Builder age(Integer age) { this.age = age; return this; }
         public Builder gender(String gender) { this.gender = gender; return this; }
@@ -58,6 +63,7 @@ public class UserResponse {
         public UserResponse build() {
             UserResponse r = new UserResponse();
             r.id = this.id;
+            r.username = this.username;
             r.name = this.name;
             r.age = this.age;
             r.gender = this.gender;

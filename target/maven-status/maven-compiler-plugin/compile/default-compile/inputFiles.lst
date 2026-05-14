@@ -7,9 +7,12 @@ C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\entity\UserFood
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\repository\DailySummaryRepository.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\FoodDietApplication.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\entity\RecentRecommendation.java
+C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\service\AuthService.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\dto\request\ConfirmRequest.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\repository\FoodRepository.java
+C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\dto\request\LoginRequest.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\repository\RecipeRepository.java
+C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\util\JwtUtil.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\repository\UserRepository.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\entity\User.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\service\FoodLogService.java
@@ -31,7 +34,9 @@ C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\dto\request\Reg
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\dto\request\FoodLogRequest.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\repository\MacroTargetRepository.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\controller\FoodRecognitionController.java
+C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\config\SecurityConfig.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\dto\response\RecognitionResponse.java
+C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\controller\AuthController.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\controller\RecipeController.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\controller\UserFoodController.java
 C:\Users\TIM\Documents\food-diet-app\src\main\java\com\food\diet\repository\UserFoodRepository.java
