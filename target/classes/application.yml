@@ -3,7 +3,7 @@ spring:
     name: food-diet-app
 
   datasource:
-    url: jdbc:mysql://localhost:3306/food_diet?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/food_diet?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -29,14 +29,19 @@ server:
 
 ai:
   qwen:
-    api-key: ${AI_API_KEY:your-api-key-here}
+    api-key: ${AI_API_KEY:sk-11af69ca20c54f82ac86ac5bc41e709f}
     base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
-    model: qwen-turbo
+    model: qwen-plus-2025-07-28
 
   kimi:
     api-key: ${KIMI_API_KEY:your-api-key-here}
     base-url: https://api.moonshot.cn/v1
     model: moonshot-v1-8k
+
+  baidu:
+    app-id: ${BAIDU_APP_ID:}
+    api-key: ${BAIDU_API_KEY:}
+    secret-key: ${BAIDU_SECRET_KEY:}
 
 logging:
   level:

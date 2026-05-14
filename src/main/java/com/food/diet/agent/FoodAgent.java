@@ -436,51 +436,6 @@ public class FoodAgent {
         );
     }
 
-    private String buildChatPromptEnhanced(String userMessage, DailySummaryResponse summary,
-                                           String recipeOptions, String eatingContext,
-                                           List<String> topFoods, List<String> recentlyRecommended) {
-        String avoidance = "";
-        if (recentlyRecommended != null && !recentlyRecommended.isEmpty()) {
-            avoidance = "【避免重复】最近推荐过：" + String.join("、", recentlyRecommended.stream().limit(5).toList()) + "\n";
-        }
-
-        return String.format("""
-                你是一个专业的健康饮食顾问，名字叫小食。
-
-                %s
-                %s
-                用户今日饮食情况：
-                - 目标热量：%d kcal，已摄入：%d kcal，剩余：%d kcal
-                - 蛋白质进度：%.1f%%，碳水进度：%.1f%%，脂肪进度：%.1f%%
-                - 状态：%s
-
-                用户问题：%s
-
-                今日推荐食谱：
-                %s
-
-                请用自然、亲切的语气回答。
-                请用JSON格式返回：
-                {
-                    "status": "状态",
-                    "advice": "回复",
-                    "tips": "贴士"
-                }
-                """,
-                eatingContext,
-                avoidance,
-                summary.getTargetCalories(),
-                summary.getConsumedCalories(),
-                summary.getRemainingCalories(),
-                summary.getProteinProgress() != null ? summary.getProteinProgress() : 0,
-                summary.getCarbsProgress() != null ? summary.getCarbsProgress() : 0,
-                summary.getFatProgress() != null ? summary.getFatProgress() : 0,
-                summary.getStatus(),
-                userMessage,
-                recipeOptions
-        );
-    }
-
     private AgentResponse parseAgentResponse(String response, DailySummaryResponse summary) {
         try {
             if (response.contains("{")) {

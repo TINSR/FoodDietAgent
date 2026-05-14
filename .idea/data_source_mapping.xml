@@ -3,5 +3,7 @@
   <component name="DataSourcePerFileMappings">
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/aaef51af-3eb2-46a4-8758-73557d15cca1/console.sql" value="aaef51af-3eb2-46a4-8758-73557d15cca1" />
     <file url="file://$PROJECT_DIR$/sql/init.sql" value="aaef51af-3eb2-46a4-8758-73557d15cca1" />
+    <file url="file://$PROJECT_DIR$/sql/recipe_seed.sql" value="aaef51af-3eb2-46a4-8758-73557d15cca1" />
+    <file url="file://$PROJECT_DIR$/sql/upgrade_v2.sql" value="aaef51af-3eb2-46a4-8758-73557d15cca1" />
   </component>
 </project>

@@ -39,46 +39,29 @@ public class FoodMatchingService {
             }
         }
 
-        // 2. 匹配系统食材（模糊匹配+精确匹配）
+        // 2. 关键词快速匹配（针对常见食材简称）- 优先于模糊搜索
+        String quickMatchId = quickMatch(normalizedName);
+        if (quickMatchId != null) {
+            Optional<Food> food = foodRepository.findById(Long.parseLong(quickMatchId));
+            if (food.isPresent()) {
+                return MatchResult.matchedFood(food.get().getId(), food.get().getName());
+            }
+        }
+
+        // 3. 模糊匹配系统食材
         List<Food> allFoods = foodRepository.findAll();
         MatchResult bestMatch = null;
         int bestScore = 0;
 
         for (Food food : allFoods) {
             int score = calculateSimilarity(normalizedName, normalizeName(food.getName()));
-            if (score > bestScore && score >= 60) { // 相似度阈值60%
+            if (score > bestScore && score >= 60) {
                 bestScore = score;
                 bestMatch = MatchResult.matchedFood(food.getId(), food.getName());
             }
         }
 
-        if (bestMatch != null) {
-            return bestMatch;
-        }
-
-        // 3. 关键词快速匹配（针对常见食材简称）
-        String quickMatch = quickMatch(normalizedName);
-        if (quickMatch != null) {
-            Optional<Food> food = foodRepository.findById(Long.parseLong(quickMatch));
-            if (food.isPresent()) {
-                return MatchResult.matchedFood(food.get().getId(), food.get().getName());
-            }
-        }
-
-        return MatchResult.unmatched();
-    }
-
-    /**
-     * 批量匹配成分列表
-     */
-    public void matchIngredients(List<com.food.diet.dto.request.IngredientItemDto> ingredients, Long userId) {
-        for (var ingredient : ingredients) {
-            MatchResult result = matchFood(ingredient.getName(), userId);
-            if (result.isMatched()) {
-                ingredient.setMatchedFoodId(result.getFoodId());
-                ingredient.setMatchedCustomFoodId(result.getCustomFoodId());
-            }
-        }
+        return bestMatch != null ? bestMatch : MatchResult.unmatched();
     }
 
     private String normalizeName(String name) {
