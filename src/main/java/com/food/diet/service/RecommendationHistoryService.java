@@ -96,28 +96,22 @@ public class RecommendationHistoryService {
             .collect(Collectors.toList());
     }
 
+    private static final Map<String, String[]> FOOD_CATEGORIES = Map.of(
+        "肉类", new String[]{"鸡", "牛", "猪", "羊", "肉"},
+        "海鲜", new String[]{"鱼", "虾", "蟹", "海鲜"},
+        "蔬菜", new String[]{"蔬菜", "青菜", "西兰花", "黄瓜", "白菜", "菠菜"},
+        "主食", new String[]{"米饭", "面条", "馒头", "面包", "粥"},
+        "蛋类", new String[]{"蛋"},
+        "豆制品", new String[]{"豆腐", "豆"},
+        "水果", new String[]{"水果", "苹果", "香蕉", "橙子"}
+    );
+
     private String categorizeFood(String foodName) {
-        String name = foodName.toLowerCase();
-        if (name.contains("鸡") || name.contains("牛") || name.contains("猪") || name.contains("羊") || name.contains("肉")) {
-            return "肉类";
-        }
-        if (name.contains("鱼") || name.contains("虾") || name.contains("蟹") || name.contains("海鲜")) {
-            return "海鲜";
-        }
-        if (name.contains("蔬菜") || name.contains("青菜") || name.contains("西兰花") || name.contains("黄瓜") || name.contains("白菜") || name.contains("菠菜")) {
-            return "蔬菜";
-        }
-        if (name.contains("米饭") || name.contains("面条") || name.contains("馒头") || name.contains("面包") || name.contains("粥")) {
-            return "主食";
-        }
-        if (name.contains("蛋")) {
-            return "蛋类";
-        }
-        if (name.contains("豆腐") || name.contains("豆")) {
-            return "豆制品";
-        }
-        if (name.contains("水果") || name.contains("苹果") || name.contains("香蕉") || name.contains("橙子")) {
-            return "水果";
+        String lower = foodName.toLowerCase();
+        for (var entry : FOOD_CATEGORIES.entrySet()) {
+            for (String keyword : entry.getValue()) {
+                if (lower.contains(keyword)) return entry.getKey();
+            }
         }
         return "其他";
     }

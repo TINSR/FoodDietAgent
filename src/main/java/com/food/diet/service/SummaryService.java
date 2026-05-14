@@ -156,45 +156,33 @@ public class SummaryService {
         return result;
     }
 
+    private static final String[] VEGETABLE_KEYWORDS = {"青菜", "菠菜", "白菜", "黄瓜", "西兰花", "西红柿", "茄子", "豆角"};
+
     private List<String> computeHighlights(int calories, int target,
                                           double proteinP, double carbsP, double fatP,
                                           List<FoodLog> logs) {
         List<String> hl = new ArrayList<>();
         int over = calories - target;
 
-        if (over > 200) {
-            hl.add("🔥 热量超标" + over + "kcal");
-        } else if (calories < target * 0.4 && !logs.isEmpty()) {
-            hl.add("⚠️ 摄入不足");
-        }
+        if (over > 200) hl.add("🔥 热量超标" + over + "kcal");
+        else if (calories < target * 0.4 && !logs.isEmpty()) hl.add("⚠️ 摄入不足");
 
-        if (proteinP < 50) {
-            hl.add("🥩 蛋白质不足");
-        } else if (proteinP > 110) {
-            hl.add("✅ 蛋白质充足");
-        }
+        if (proteinP < 50) hl.add("🥩 蛋白质不足");
+        else if (proteinP > 110) hl.add("✅ 蛋白质充足");
+        if (carbsP > 110) hl.add("🍚 碳水偏高");
+        if (fatP > 110) hl.add("🥑 脂肪超标");
+        else if (fatP < 40) hl.add("⚠️ 脂肪偏低");
 
-        if (carbsP > 110) {
-            hl.add("🍚 碳水偏高");
-        }
-
-        if (fatP > 110) {
-            hl.add("🥑 脂肪超标");
-        } else if (fatP < 40) {
-            hl.add("⚠️ 脂肪偏低");
-        }
-
-        // Check vegetable diversity
-        long vegeCount = logs.stream()
-            .filter(l -> l.getFoodName() != null && (
-                l.getFoodName().contains("青菜") || l.getFoodName().contains("菠菜") ||
-                l.getFoodName().contains("白菜") || l.getFoodName().contains("黄瓜") ||
-                l.getFoodName().contains("西兰花") || l.getFoodName().contains("西红柿") ||
-                l.getFoodName().contains("茄子") || l.getFoodName().contains("豆角")))
-            .count();
-        if (vegeCount == 0) {
-            hl.add("🥬 缺少蔬菜");
-        }
+        boolean hasVegetable = logs.stream()
+            .filter(l -> l.getFoodName() != null)
+            .anyMatch(l -> {
+                String name = l.getFoodName();
+                for (String kw : VEGETABLE_KEYWORDS) {
+                    if (name.contains(kw)) return true;
+                }
+                return false;
+            });
+        if (!hasVegetable) hl.add("🥬 缺少蔬菜");
 
         return hl;
     }

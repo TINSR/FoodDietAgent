@@ -139,35 +139,27 @@ public class RecipeScoringService {
         return score;
     }
 
+    private static final Map<String, String> CATEGORY_PATTERNS = Map.of(
+        "肉类", "鸡胸|鸡腿|鸡肉|牛肉|猪肉|鱼",
+        "蔬菜", "蔬菜|西兰花|黄瓜|青菜|生菜",
+        "主食", "面|饭|面包|粥|馒头",
+        "蛋类", "蛋|鸡蛋|蛋花",
+        "豆制品", "豆|豆腐|豆浆"
+    );
+
     private String inferCategory(Recipe recipe) {
-        String name = recipe.getName().toLowerCase();
-        String description = (recipe.getDescription() != null ? recipe.getDescription().toLowerCase() : "");
-        String combined = name + " " + description;
-
-        if (combined.contains("鸡胸") || combined.contains("鸡腿") || combined.contains("鸡肉") || combined.contains("牛肉") || combined.contains("猪肉") || combined.contains("鱼")) {
-            return "肉类";
+        String text = (recipe.getName() + " " + (recipe.getDescription() != null ? recipe.getDescription() : "")).toLowerCase();
+        for (var entry : CATEGORY_PATTERNS.entrySet()) {
+            if (entry.getValue().chars().anyMatch(c -> text.contains(String.valueOf((char)c)))) {
+                return entry.getKey();
+            }
         }
-        if (combined.contains("蔬菜") || combined.contains("西兰花") || combined.contains("黄瓜") || combined.contains("青菜") || combined.contains("生菜")) {
-            return "蔬菜";
-        }
-        if (combined.contains("面") || combined.contains("饭") || combined.contains("面包") || combined.contains("粥") || combined.contains("馒头")) {
-            return "主食";
-        }
-        if (combined.contains("蛋") || combined.contains("鸡蛋") || combined.contains("蛋花")) {
-            return "蛋类";
-        }
-        if (combined.contains("豆") || combined.contains("豆腐") || combined.contains("豆浆")) {
-            return "豆制品";
-        }
-
         return "其他";
     }
 
     public List<String> getRecommendedCategories(List<Recipe> recentlyRecommended) {
         if (recentlyRecommended == null || recentlyRecommended.isEmpty()) return new ArrayList<>();
-        return recentlyRecommended.stream()
-            .map(this::inferCategory)
-            .collect(Collectors.toList());
+        return recentlyRecommended.stream().map(this::inferCategory).collect(Collectors.toList());
     }
 
     private static class RecipeScore {
